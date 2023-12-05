@@ -8,7 +8,7 @@ var BadRequest = function (_configuration) {
 }
 
 BadRequest.prototype = (function () {
-  function getConfiguration (self) {
+  function getConfiguration(self) {
     return self.configuration.all().badRequest
   }
 
@@ -91,30 +91,18 @@ SellerCashUpdater.prototype = (function () {
     doUpdate: function (seller, expectedBill, currentIteration) {
       var self = this
       return function (response) {
-        if (response.statusCode === 200) {
-          self.sellerService.setOnline(seller)
-
-          response.on('error', function (err) {
-            console.error(err)
-          })
-
-          response.on('data', function (sellerResponse) {
-            console.info(colors.grey(seller.name + ' replied "' + sellerResponse + '"'))
-
-            try {
-              var actualBill = utils.jsonify(sellerResponse)
-              self.orderService.validateBill(actualBill)
-              self.sellerService.updateCash(seller, expectedBill, actualBill, currentIteration)
-            } catch (exception) {
-              self.sellerService.notify(seller, { type: 'ERROR', content: exception.message })
-            }
-          })
-        } else if (response.statusCode === 404) {
-          self.sellerService.setOnline(seller)
-          console.info(colors.grey(seller.name + ' replied 404. Everything is fine.'))
+        self.sellerService.setOnline(seller)
+        if (_.isEmpty(response)) {
+          console.info(colors.grey(seller.name + ' replied 404 or nothing. Everything is fine.'))
         } else {
-          self.sellerService.setOnline(seller)
-          self.sellerService.updateCash(seller, expectedBill, undefined, currentIteration)
+          let actualBill = response;
+          self.orderService.validateBill(actualBill)
+          console.info(colors.blue(seller.name + ' replied "' + JSON.stringify(actualBill) + '"'))
+          try {
+            self.sellerService.updateCash(seller, expectedBill, actualBill, currentIteration)
+          } catch (exception) {
+            self.sellerService.notify(seller, { type: 'ERROR', content: exception.message })
+          }
         }
       }
     }
@@ -131,7 +119,7 @@ var Dispatcher = function (_sellerService, _orderService, _configuration) {
 }
 
 Dispatcher.prototype = (function () {
-  function putSellerOffline (self, seller, currentIteration) {
+  function putSellerOffline(self, seller, currentIteration) {
     return function () {
       console.error(colors.red('Could not reach seller ' + utils.stringify(seller)))
       var offlinePenalty = getConfiguration(self).offlinePenalty
@@ -150,7 +138,7 @@ Dispatcher.prototype = (function () {
     this.shoppingIntervalInMillis = shoppingIntervalInMillis
   }
 
-  function getReductionPeriodFor (reductionStrategy) {
+  function getReductionPeriodFor(reductionStrategy) {
     if (reductionStrategy === 'PAY THE PRICE') {
       return new Period(Reduction.PAY_THE_PRICE, 10000)
     }
@@ -166,18 +154,18 @@ Dispatcher.prototype = (function () {
     return new Period(Reduction.STANDARD, 5000)
   }
 
-  function scheduleNextIteration (self, nextIteration, intervalInMillis) {
+  function scheduleNextIteration(self, nextIteration, intervalInMillis) {
     setTimeout(function () {
       self.startBuying(nextIteration)
     }, intervalInMillis)
   }
 
-  function shouldSendOrders (self) {
+  function shouldSendOrders(self) {
     const active = getConfiguration(self).active
     return active == null ? true : active
   }
 
-  function getConfiguration (self) {
+  function getConfiguration(self) {
     return self.configuration.all()
   }
 

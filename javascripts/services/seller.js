@@ -3,7 +3,7 @@ var utils = require('../utils')
 var UrlAssembler = require('url-assembler')
 var _ = require('lodash')
 
-function SellerService (_sellers, _configuration) {
+function SellerService(_sellers, _configuration) {
   this.sellers = _sellers
   this.configuration = _configuration
 }
@@ -61,7 +61,7 @@ service.register = function (sellerUrl, name, password) {
     name: name,
     password: password,
     hostname: parsedUrl.hostname,
-    port: parsedUrl.port,
+    port: parsedUrl.port || 80,
     path: parsedUrl.pathname,
     cash: 0.0,
     online: false,
@@ -78,34 +78,56 @@ service.allSellers = function () {
 service.updateCash = function (seller, expectedBill, actualBill, currentIteration) {
   if (this.configuration.all().cashFreeze) {
     console.info('Cash was not updated because cashFreeze config parameter is true')
-    return
-  }
-  try {
-    var totalExpectedBill = utils.fixPrecision(expectedBill.total, 2)
-    var message
-    var loss
-
-    if (_.isEmpty(actualBill)) {
-      loss = utils.fixPrecision(totalExpectedBill * 0.5, 2)
-      this.deductCash(seller, loss, currentIteration)
-      message = 'Goddamn, ' + seller.name + ' has neither sent us a valid bill nor responded 404. ' + loss + ' will be charged.'
-      this.notify(seller, { type: 'ERROR', content: message })
-    } else {
-      var totalActualBill = utils.fixPrecision(actualBill.total, 2)
-
-      if (actualBill && totalExpectedBill === totalActualBill) {
-        this.addCash(seller, totalExpectedBill, currentIteration)
-        this.notify(seller, { type: 'INFO', content: 'Hey, ' + seller.name + ' earned ' + totalExpectedBill })
+    try {
+      var totalExpectedBill = utils.fixPrecision(expectedBill.total, 2)
+      var message
+      var loss
+      if (_.isEmpty(actualBill)) {
+        loss = utils.fixPrecision(totalExpectedBill * 0.5, 2)
+        message = 'Goddamn, ' + seller.name + ' has neither sent us a valid bill nor responded 404. You will loose ' + loss + ' when cashFreeze config parameter is false.'
+        this.notify(seller, { type: 'ERROR', content: message })
       } else {
+        var totalActualBill = utils.fixPrecision(actualBill.total, 2)
+
+        if (actualBill && totalExpectedBill === totalActualBill) {
+          this.notify(seller, { type: 'INFO', content: 'Hey, ' + seller.name + ' earned ' + totalExpectedBill })
+        } else {
+          loss = utils.fixPrecision(totalExpectedBill * 0.5, 2)
+          message = 'Goddamn, ' + seller.name + ' replied ' + totalActualBill + ' but right answer was ' + totalExpectedBill + '. You will loose ' + loss + ' when cashFreeze config parameter is false.'
+          this.notify(seller, { type: 'ERROR', content: message })
+        }
+      }
+    } catch (exception) {
+      this.notify(seller, { type: 'ERROR', content: exception.message })
+    }
+  } else {
+    try {
+      var totalExpectedBill = utils.fixPrecision(expectedBill.total, 2)
+      var message
+      var loss
+      if (_.isEmpty(actualBill)) {
         loss = utils.fixPrecision(totalExpectedBill * 0.5, 2)
         this.deductCash(seller, loss, currentIteration)
-        message = 'Goddamn, ' + seller.name + ' replied ' + totalActualBill + ' but right answer was ' + totalExpectedBill + '. ' + loss + ' will be charged.'
+        message = 'Goddamn, ' + seller.name + ' has neither sent us a valid bill nor responded 404. ' + loss + ' will be charged.'
         this.notify(seller, { type: 'ERROR', content: message })
+      } else {
+        var totalActualBill = utils.fixPrecision(actualBill.total, 2)
+
+        if (actualBill && totalExpectedBill === totalActualBill) {
+          this.addCash(seller, totalExpectedBill, currentIteration)
+          this.notify(seller, { type: 'INFO', content: 'Hey, ' + seller.name + ' earned ' + totalExpectedBill })
+        } else {
+          loss = utils.fixPrecision(totalExpectedBill * 0.5, 2)
+          this.deductCash(seller, loss, currentIteration)
+          message = 'Goddamn, ' + seller.name + ' replied ' + totalActualBill + ' but right answer was ' + totalExpectedBill + '. ' + loss + ' will be charged.'
+          this.notify(seller, { type: 'ERROR', content: message })
+        }
       }
+    } catch (exception) {
+      this.notify(seller, { type: 'ERROR', content: exception.message })
     }
-  } catch (exception) {
-    this.notify(seller, { type: 'ERROR', content: exception.message })
   }
+
 }
 
 service.setOffline = function (seller, offlinePenalty, currentIteration) {
