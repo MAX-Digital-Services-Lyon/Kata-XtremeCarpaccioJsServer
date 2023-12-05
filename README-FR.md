@@ -1,7 +1,4 @@
-# Gitpod workspace status
-
-[![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://gitlab.com/conserto/explorers/wip/extreme-carpaccio/server) 
-[![Gitpod Build status](https://travis-ci.org/dlresende/extreme-carpaccio.svg?branch=master)]()
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/MAX-Digital-Services-Lyon/Kata-XtremeCarpaccioJsServer)
 
 # Instructions pour les facilitateurs
 
