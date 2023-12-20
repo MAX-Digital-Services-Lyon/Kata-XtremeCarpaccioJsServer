@@ -22,6 +22,7 @@ results
 
 npm-debug.log
 node_modules
+packages-lock.json
 
 public/components
 

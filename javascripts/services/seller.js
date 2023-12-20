@@ -57,8 +57,10 @@ service.isAuthorized = function (name, password) {
 
 service.register = function (sellerUrl, name, password) {
   var parsedUrl = new url.URL(sellerUrl)
+  console.log(parsedUrl)
   var seller = {
     name: name,
+    protocol: parsedUrl.protocol,
     password: password,
     hostname: parsedUrl.hostname,
     port: parsedUrl.port || 80,
@@ -144,7 +146,7 @@ service.setOnline = function (seller) {
 }
 
 service.notify = function (seller, message) {
-  utils.post(seller.hostname, seller.port, seller.path + 'feedback', message)
+  utils.post(seller.protocol, seller.hostname, seller.port, seller.path + 'feedback', message)
 
   if (message.type === 'ERROR') {
     console.error('Notifying ' + seller.name + ': ' + message.content)

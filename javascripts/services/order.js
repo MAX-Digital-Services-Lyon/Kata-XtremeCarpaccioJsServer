@@ -13,7 +13,7 @@ var service = OrderService.prototype
 
 service.sendOrder = function (seller, order, cashUpdater, logError) {
   console.info(colors.grey('Sending order ' + utils.stringify(order) + ' to seller ' + utils.stringify(seller)))
-  utils.post(seller.hostname, seller.port, seller.path + 'order', order, cashUpdater, logError)
+  utils.post(seller.protocol, seller.hostname, seller.port, seller.path + 'order', order, cashUpdater, logError)
 }
 
 service.createOrder = function (reduction) {
