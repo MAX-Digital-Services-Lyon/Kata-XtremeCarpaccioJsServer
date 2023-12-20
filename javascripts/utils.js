@@ -24,17 +24,21 @@ Utils.prototype = {
     return parseFloat(number.toFixed(precision))
   },
 
-  post: function (hostname, port, path, body, onSuccess, onError) {
-    var bodyStringified = this.stringify(body)
-    let url = `https://${hostname}${path}`;
-    console.log(url);
+  post: function (protocol, hostname, port, path, body, onSuccess, onError) {
+    let url = ''
+    if (port == 80){
+      url = `${protocol}//${hostname}${path}`;
+    }else{
+      url = `${protocol}//${hostname}:${port}${path}`;
+    }
+  
     axios.post(url, body)
       .then(res => {
         return onSuccess(res.data);
-      }).catch(error =>{
-          if (typeof onError !== 'undefined') {
-              return onError(error);
-          }
+      }).catch(error => {
+        if (typeof onError !== 'undefined') {
+          return onError(error);
+        }
       });
   }
 }
