@@ -25,7 +25,13 @@ Utils.prototype = {
   },
 
   post: function (protocol, hostname, port, path, body, onSuccess, onError) {
-    let url = `${protocol}//${hostname}:${port}${path}`;
+    let url = ''
+    if (port == 80){
+      url = `${protocol}//${hostname}${path}`;
+    }else{
+      url = `${protocol}//${hostname}:${port}${path}`;
+    }
+  
     axios.post(url, body)
       .then(res => {
         return onSuccess(res.data);
